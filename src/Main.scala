@@ -6,8 +6,14 @@ import java.awt.event.ActionEvent
 import java.awt.{ Color, Graphics2D, Point, geom, MouseInfo }
 import scala.swing.event.MousePressed
 import scala.swing.event.KeyTyped
+import javax.swing.ImageIcon
 
 object Game extends SimpleSwingApplication {
+  
+  var food = 10
+  var currentAnt = ""
+  val im_thrower: Image = (new ImageIcon("img/ant_thrower.png")).getImage( )
+  val im_harvester: Image = (new ImageIcon("img/ant_harvester.png")).getImage( )
   
   lazy val ui = new Panel {
     
@@ -18,31 +24,59 @@ object Game extends SimpleSwingApplication {
     listenTo(mouse.clicks, mouse.moves, keys)
 
     reactions += {
-      case KeyTyped(_, 'n', _, _)=> {for (pl <- placesSet.places) {
+      case KeyTyped(_, 'n', _, _) => for (pl <- placesSet.places) {
         pl.ant.move()
         for (bee <- pl.inside) {
           bee.move()
         }
+        pl.update()
       }
-      placesSet.places(7).addBee(new Bee(placesSet.places(7)))}
-      case e: MousePressed =>
+      case KeyTyped(_, 'b', _, _) => placesSet.places(7).addBee(new Bee(placesSet.places(7)))
+      case e: MousePressed => 
+        if (currentAnt == "") {
+          e.point match {
+            case p if (10 < p.x & p.x < 76 &  10 < p.y & p.y < 76) => {
+              if (food >= 2) {
+                currentAnt = "Harvester Ant" 
+                food -= 2}}
+            case p if (76 < p.x & p.x < 142 &  10 < p.y & p.y < 76) => {
+              if (food >= 2) {
+                currentAnt = "Thrower Ant" 
+                food -= 2}}
+            case _ =>
+            }
+        } else {
+          e.point match {
+            case p if (200 < p.y & p.y < 298) => currentAnt match {
+            case "Harvester Ant" => {placesSet.places((p.x-10)/93).ant = new HarvesterAnt(placesSet.places((p.x-10)/93))
+                                     currentAnt = ""}
+            case "Thrower Ant" => {placesSet.places((p.x-10)/93).ant = new ThrowerAnt(placesSet.places((p.x-10)/93))
+                                   currentAnt = ""}
+            case _ =>
+            }
+        }
+      }
     }
     
     override def paintComponent(g: Graphics2D) = {
       super.paintComponent(g)
+      g.drawString(currentAnt, 700, 580)
+      g.drawString(""+food, 10, 580)
+      g.drawImage(im_harvester, 10, 10, peer)
+      g.drawImage(im_thrower, 76, 10, peer)
       for (pl <- placesSet.places) {
        /* g.setColor(Color.black)
         g.draw(pl.boite)*/
         g.drawImage(pl.im, pl.pos.x, pl.pos.y, peer) 
         pl.ant match{
           case a: NoAnt => 
-          case a => g.drawImage(a.im, pl.pos.x, pl.pos.y, peer)
+          case a => g.drawImage(a.im, pl.pos.x, pl.pos.y+20, peer)
         }
         pl.inside match{
           case Nil => {}
           case bee::others => {
-            g.drawImage(bee.im, pl.pos.x, pl.pos.y, peer)
-            g.drawString("X"+pl.inside.length, pl.pos.x, pl.pos.y)
+            g.drawImage(bee.im, pl.pos.x+30, pl.pos.y-10, peer)
+            g.drawString("X"+pl.inside.length, pl.pos.x + 60, pl.pos.y+30)
           }
         }
       }     

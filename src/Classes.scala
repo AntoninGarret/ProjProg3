@@ -5,9 +5,6 @@ import java.awt.event.{ ActionEvent, ActionListener }
 import java.awt.{ Color, Graphics2D, Point, geom, MouseInfo }
 import javax.swing.{ ImageIcon, Timer }
 
-object Food{
-  var count:Int = 0
-}
 
 trait Insect{
   var pl: Place
@@ -36,7 +33,7 @@ class HarvesterAnt(position:Place) extends Ant {
   val im: Image = (new ImageIcon("img/ant_harvester.png")).getImage( )
   var armor:Int = 1
   val cost:Int = 2
-  def move() = Food.count += 1
+  def move() = Game.food += 1
 }
 
 class ThrowerAnt(position:Place) extends Ant {
@@ -91,8 +88,10 @@ abstract class Place {
     if (this.ant.armor <= 0){
       this.ant = new NoAnt(this)
     }
-    if (this.inside.head.armor <= 0) {
-      this.inside = this.inside.tail
+    for (bee <- this.inside){
+      if (bee.armor == 0){
+        this.removeBee(bee)
+      }
     }
   } 
  /* val boite = new geom.GeneralPath

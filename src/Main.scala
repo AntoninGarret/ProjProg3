@@ -1,85 +1,112 @@
-import scala.swing._
-import java.awt.event
-import java.awt.event.ActionListener
-import javax.swing.Timer
+import java.awt.Color
+import java.awt.Graphics2D
 import java.awt.event.ActionEvent
-import java.awt.{ Color, Graphics2D, Point, geom, MouseInfo }
-import scala.swing.event.MousePressed
+import java.awt.event.ActionListener
+import scala.swing.Dimension
+import scala.swing.Image
+import scala.swing.MainFrame
+import scala.swing.Panel
+import scala.swing.SimpleSwingApplication
 import scala.swing.event.KeyTyped
+import scala.swing.event.MousePressed
 import javax.swing.ImageIcon
+import javax.swing.Timer
+import java.awt.Point
 
 object Game extends SimpleSwingApplication {
-  
+
   var food = 10
-  var currentAnt = ""
-  val im_thrower: Image = (new ImageIcon("img/ant_thrower.png")).getImage( )
-  val im_harvester: Image = (new ImageIcon("img/ant_harvester.png")).getImage( )
-  
+  var currentAnt: Option[Ant] = None
+  var market = List(new MiddlePlace(new Point(10 + 2 * 93, 10)))
+  for (i <- 1 to 2) {
+    market = new MiddlePlace(new Point(10 + (2 - i) * 93, 10)) :: market
+  }
+  val ants = List(new HarvesterAnt(market(0)), new ThrowerAnt(market(1)), new ScubaAnt(market(2)))
+
   lazy val ui = new Panel {
-    
+
     background = Color.white
-    preferredSize = new Dimension(800, 600)
+    preferredSize = new Dimension(800, 700)
 
     focusable = true
     listenTo(mouse.clicks, mouse.moves, keys)
 
     reactions += {
-      case KeyTyped(_, 'n', _, _) => for (pl <- placesSet.places) {
+      case KeyTyped(_, 'n', _, _) => for (pl <- placesSet.tunnels(0)) {
+        pl.drown()
         pl.ant.move()
         for (bee <- pl.inside) {
           bee.move()
         }
-        pl.update()
       }
-      case KeyTyped(_, 'b', _, _) => placesSet.places(7).addBee(new Bee(placesSet.places(7)))
-      case e: MousePressed => 
-        if (currentAnt == "") {
+      case KeyTyped(_, 'b', _, _) => placesSet.tunnels(0)(7).addBee(new Bee(placesSet.tunnels(0)(7)))
+      case e: MousePressed =>
+        if (currentAnt == None) {
           e.point match {
-            case p if (10 < p.x & p.x < 76 &  10 < p.y & p.y < 76) => {
-              if (food >= 2) {
-                currentAnt = "Harvester Ant" 
-                food -= 2}}
-            case p if (76 < p.x & p.x < 142 &  10 < p.y & p.y < 76) => {
-              if (food >= 2) {
-                currentAnt = "Thrower Ant" 
-                food -= 2}}
-            case _ =>
+            case p if (10 < p.y & p.y < 98) => {
+              if (food >= ants((p.x - 10) / 93).cost) {
+                currentAnt = Some(ants((p.x - 10) / 93))
+                food -= ants((p.x - 10) / 93).cost
+              }
             }
+            case _ =>
+          }
         } else {
           e.point match {
-            case p if (200 < p.y & p.y < 298) => currentAnt match {
-            case "Harvester Ant" => {placesSet.places((p.x-10)/93).ant = new HarvesterAnt(placesSet.places((p.x-10)/93))
-                                     currentAnt = ""}
-            case "Thrower Ant" => {placesSet.places((p.x-10)/93).ant = new ThrowerAnt(placesSet.places((p.x-10)/93))
-                                   currentAnt = ""}
-            case _ =>
+            case p if (204 < p.y & p.y < 498) => currentAnt match {
+              case Some(a: HarvesterAnt) => {
+                placesSet.tunnels((p.y - 204) / 98)((p.x - 10) / 93).ant = new HarvesterAnt(placesSet.tunnels(0)((p.x - 10) / 93))
+                currentAnt = None
+              }
+              case Some(a: ThrowerAnt) => {
+                placesSet.tunnels((p.y - 204) / 98)((p.x - 10) / 93).ant = new ThrowerAnt(placesSet.tunnels(0)((p.x - 10) / 93))
+                currentAnt = None
+              }
+              case Some(a: ScubaAnt) => {
+                placesSet.tunnels((p.y - 204) / 98)((p.x - 10) / 93).ant = new ScubaAnt(placesSet.tunnels(0)((p.x - 10) / 93))
+                currentAnt = None
+              }
+              case _ =>
             }
-        }
-      }
-    }
-    
-    override def paintComponent(g: Graphics2D) = {
-      super.paintComponent(g)
-      g.drawString(currentAnt, 700, 580)
-      g.drawString(""+food, 10, 580)
-      g.drawImage(im_harvester, 10, 10, peer)
-      g.drawImage(im_thrower, 76, 10, peer)
-      for (pl <- placesSet.places) {
-       /* g.setColor(Color.black)
-        g.draw(pl.boite)*/
-        g.drawImage(pl.im, pl.pos.x, pl.pos.y, peer) 
-        pl.ant match{
-          case a: NoAnt => 
-          case a => g.drawImage(a.im, pl.pos.x, pl.pos.y+20, peer)
-        }
-        pl.inside match{
-          case Nil => {}
-          case bee::others => {
-            g.drawImage(bee.im, pl.pos.x+30, pl.pos.y-10, peer)
-            g.drawString("X"+pl.inside.length, pl.pos.x + 60, pl.pos.y+30)
+            case _ =>
           }
         }
-      }     
+    }
+
+    override def paintComponent(g: Graphics2D) = {
+      super.paintComponent(g)
+      currentAnt match {
+        case None    =>
+        case Some(a) => g.drawImage(a.im, 700, 580, peer)
+      }
+
+      g.drawString("Food : " + food, 10, 580)
+      for (ant <- ants) {
+        g.drawImage(ant.im, ant.pl.pos.x, ant.pl.pos.y, peer)
+      }
+      for (i <- 0 to 2) {
+        for (pl <- placesSet.tunnels(i)) {
+          /* g.setColor(Color.black)
+    	    g.draw(pl.boite)*/
+          if (pl.isWater) {
+            g.setColor(Color.blue)
+            g.fillRect(pl.pos.x, pl.pos.y, 93, 98)
+          }
+          g.drawImage(pl.im, pl.pos.x, pl.pos.y, peer)
+          pl.ant match {
+            case a: NoAnt =>
+            case a        => g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
+          }
+          pl.inside match {
+            case Nil => {}
+            case bee :: others => {
+              g.drawImage(bee.im, pl.pos.x + 30, pl.pos.y - 10, peer)
+              g.setColor(Color.white)
+              g.drawString("X" + pl.inside.length, pl.pos.x + 60, pl.pos.y + 30)
+            }
+          }
+        }
+      }
     }
   }
   class MyTimer extends ActionListener {
@@ -90,8 +117,8 @@ object Game extends SimpleSwingApplication {
     /* The swing timer */
     val timer = new Timer(delay, this)
     timer.setCoalesce(true) // Please restart by yourself
-    timer.start()           // Let's go
-    
+    timer.start() // Let's go
+
     /* react to the timer events */
     def actionPerformed(e: ActionEvent): Unit = {
       ui.repaint() // Tell Scala that the image should be redrawn
@@ -105,6 +132,5 @@ object Game extends SimpleSwingApplication {
     title = "Ants vs SomeBees"
     contents = ui
   }
- 
-  
+
 }

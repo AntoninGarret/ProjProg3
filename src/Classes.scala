@@ -55,21 +55,38 @@ class HarvesterAnt(position: Place) extends Ant {
   val blocksPath = true
 }
 
-class ThrowerAnt(position: Place) extends Ant {
-  var pl: Place = position
-  val im: Image = (new ImageIcon("img/ant_thrower.png")).getImage()
+trait ThrowerAnt extends Ant {
   var armor: Int = 1
   val cost: Int = 2
   val strength1 = 1
   var strength = strength1
   val strength2 = 2 * strength1 
+  val blocksPath = true
+}
+
+class ShortThrowerAnt(position:Place) extends ThrowerAnt{
+  val im: Image = (new ImageIcon("img/ant_shortthrower.png")).getImage()
+  var pl: Place = position
   def move() = {
-    this.pl.inside match {
-      case List()  => {}
-      case hd :: l => hd.beattacked(strength)
+    var hit = false
+    var place_checked = this.pl
+    for (i <- 0 to 2){
+      if (!hit){
+        place_checked match{
+          case p: RightPlace => hit = true
+          case _ => {}
+        }
+        place_checked.inside match {
+          case List()  => {}
+          case hd :: l => {
+            hd.beattacked(strength)
+            hit = true
+          }
+        }
+        place_checked = place_checked.in
+      }
     }
   }
-  val blocksPath = true
 }
 
 class ScubaAnt(position: Place) extends Ant {
@@ -271,6 +288,11 @@ class LeftPlace(position: Point) extends Place {
 
 class RightPlace(position: Point) extends Place {
   val pos = position
+}
+
+class MiddleWaterPlace(position:Point) extends MiddlePlace(position) {
+  override val im = (new ImageIcon("img/water_tunnel.png")).getImage()
+  this.isWater = true
 }
 
 object placesSet {

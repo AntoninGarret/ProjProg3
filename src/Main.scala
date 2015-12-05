@@ -25,7 +25,7 @@ object Game extends SimpleSwingApplication {
   for (i <- 1 to nbAnts) {
     market = new MiddlePlace(new Point(10 + (nbAnts - i) * 93, 10)) :: market
   }
-  val ants = List(new HarvesterAnt(market(0)), new ThrowerAnt(market(1)), new ScubaAnt(market(2)), new NinjaAnt(market(3)),
+  val ants = List(new HarvesterAnt(market(0)), new ShortThrowerAnt(market(1)), new ScubaAnt(market(2)), new NinjaAnt(market(3)),
     new HungryAnt(market(4)), new BodyguardAnt(market(5), new NoAnt(market(5))), new QueenAnt(market(6)))
 
   var beesWin = false
@@ -73,7 +73,7 @@ object Game extends SimpleSwingApplication {
                     currentAnt = None
                   }
                   case Some(a: ThrowerAnt) => {
-                    place.ant = new ThrowerAnt(place)
+                    place.ant = new ShortThrowerAnt(place)
                     currentAnt = None
                   }
                   case Some(a: ScubaAnt) => {

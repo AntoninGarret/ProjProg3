@@ -16,12 +16,19 @@ import java.awt.Point
 object Game extends SimpleSwingApplication {
 
   var food = 10
+
+  var NoQueen = true
   var currentAnt: Option[Ant] = None
-  var market = List(new MiddlePlace(new Point(10 + 2 * 93, 10)))
-  for (i <- 1 to 2) {
-    market = new MiddlePlace(new Point(10 + (2 - i) * 93, 10)) :: market
+
+  val nbAnts = 6
+  var market = List(new MiddlePlace(new Point(10 + nbAnts * 93, 10)))
+  for (i <- 1 to nbAnts) {
+    market = new MiddlePlace(new Point(10 + (nbAnts - i) * 93, 10)) :: market
   }
-  val ants = List(new HarvesterAnt(market(0)), new ThrowerAnt(market(1)), new ScubaAnt(market(2)))
+  val ants = List(new HarvesterAnt(market(0)), new ThrowerAnt(market(1)), new ScubaAnt(market(2)), new NinjaAnt(market(3)),
+    new HungryAnt(market(4)), new BodyguardAnt(market(5), new NoAnt(market(5))), new QueenAnt(market(6)))
+
+  var beesWin = false
 
   lazy val ui = new Panel {
 
@@ -32,11 +39,15 @@ object Game extends SimpleSwingApplication {
     listenTo(mouse.clicks, mouse.moves, keys)
 
     reactions += {
-      case KeyTyped(_, 'n', _, _) => for (pl <- placesSet.tunnels(0)) {
-        pl.drown()
-        pl.ant.move()
-        for (bee <- pl.inside) {
-          bee.move()
+      case KeyTyped(_, 'n', _, _) => {
+        for (i <- 0 to 2) {
+          for (pl <- placesSet.tunnels(i)) {
+            pl.drown()
+            pl.ant.move()
+            for (bee <- pl.inside) {
+              bee.move()
+            }
+          }
         }
       }
       case KeyTyped(_, 'b', _, _) => placesSet.tunnels(0)(7).addBee(new Bee(placesSet.tunnels(0)(7)))
@@ -51,32 +62,51 @@ object Game extends SimpleSwingApplication {
             }
             case _ =>
           }
-        } 
-        else {
-          for(tunnel:List[Place] <- placesSet.tunnels){
-            for(place:Place <- tunnel){
-              
-              if (place.isInPlace(e.point)){currentAnt match {
-                case Some(a: HarvesterAnt) => {
-                  place.ant = new HarvesterAnt(place)
-                  currentAnt = None
+        } else {
+          for (tunnel: List[Place] <- placesSet.tunnels) {
+            for (place: Place <- tunnel) {
+
+              if (place.isInPlace(e.point)) {
+                currentAnt match {
+                  case Some(a: HarvesterAnt) => {
+                    place.ant = new HarvesterAnt(place)
+                    currentAnt = None
+                  }
+                  case Some(a: ThrowerAnt) => {
+                    place.ant = new ThrowerAnt(place)
+                    currentAnt = None
+                  }
+                  case Some(a: ScubaAnt) => {
+                    place.ant = new ScubaAnt(place)
+                    currentAnt = None
+                  }
+                  case Some(a: NinjaAnt) => {
+                    place.ant = new NinjaAnt(place)
+                    currentAnt = None
+                  }
+                  case Some(a: HungryAnt) => {
+                    place.ant = new HungryAnt(place)
+                    currentAnt = None
+                  }
+                  case Some(a: BodyguardAnt) => {
+                    place.ant = new BodyguardAnt(place, place.ant)
+                    currentAnt = None
+                  }
+                  case Some(a: QueenAnt) => {
+                    if (NoQueen) {
+                      place.ant = new QueenAnt(place)
+                      NoQueen = false
+                    }
+                    currentAnt = None
+                  }
+                  case _ =>
                 }
-                case Some(a: ThrowerAnt) => {
-                  place.ant = new ThrowerAnt(place)
-                  currentAnt = None
-                }
-                case Some(a: ScubaAnt) => {
-                  place.ant = new ScubaAnt(place)
-                  currentAnt = None
-                }
-              }  
               }
             }
-          }    
+          }
         }
       case _ =>
-          
-        }
+
     }
 
     override def paintComponent(g: Graphics2D) = {
@@ -106,30 +136,41 @@ object Game extends SimpleSwingApplication {
           pl.inside match {
             case Nil => {}
             case bee :: others => {
-              g.drawImage(bee.im, pl.pos.x + 30, pl.pos.y - 10, peer)
+              g.drawImage(bee.im, bee.x + 30, pl.pos.y - 10, peer)
               g.setColor(Color.white)
-              g.drawString("X" + pl.inside.length, pl.pos.x + 60, pl.pos.y + 30)
+              g.drawString("X" + pl.inside.length, bee.x + 60, pl.pos.y + 30)
             }
           }
         }
       }
+      if (beesWin) {
+        g.drawString("The bees win", 400, 580)
+      }
     }
   }
-  class MyTimer extends ActionListener {
-    /* Configuration */
-    val fpsTarget = 50 // Desired amount of frames per second
-    var delay = 1000 / fpsTarget
+    class MyTimer extends ActionListener {
+      /* Configuration */
+      val fpsTarget = 50 // Desired amount of frames per second
+      var delay = 1000 / fpsTarget
 
-    /* The swing timer */
-    val timer = new Timer(delay, this)
-    timer.setCoalesce(true) // Please restart by yourself
-    timer.start() // Let's go
+      /* The swing timer */
+      val timer = new Timer(delay, this)
+      timer.setCoalesce(true) // Please restart by yourself
+      timer.start() // Let's go
 
-    /* react to the timer events */
-    def actionPerformed(e: ActionEvent): Unit = {
-      ui.repaint() // Tell Scala that the image should be redrawn
+      /* react to the timer events */
+      def actionPerformed(e: ActionEvent): Unit = {
+        for (i <- 0 to 2) {
+          for (pl <- placesSet.tunnels(i)) {
+            for (bee <- pl.inside) {
+              bee.deplace()
+            }
+          }
+        }
+        ui.repaint() // Tell Scala that the image should be redrawn
+      }
     }
-  }
+    
   val t = new MyTimer()
 
   // Part 4: Main initialization: Create a new window and populate it
@@ -138,5 +179,4 @@ object Game extends SimpleSwingApplication {
     title = "Ants vs SomeBees"
     contents = ui
   }
-
 }

@@ -118,6 +118,10 @@ abstract class Place {
       case a => this.ant = new NoAnt(this)
     }
   }
+  def isInPlace(p:Point):Boolean ={
+      if ((p.x < this.pos.x + 93) & (p.x > this.pos.x) & (p.y < this.pos.y + 93) & (p.y > this.pos.y)) return true
+      else return false
+  }
 }
 
 class MiddlePlace(position:Point) extends Place {

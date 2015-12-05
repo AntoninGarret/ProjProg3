@@ -51,25 +51,31 @@ object Game extends SimpleSwingApplication {
             }
             case _ =>
           }
-        } else {
-          e.point match {
-            case p if (204 < p.y & p.y < 498) => currentAnt match {
-              case Some(a: HarvesterAnt) => {
-                placesSet.tunnels((p.y - 204) / 98)((p.x - 10) / 93).ant = new HarvesterAnt(placesSet.tunnels(0)((p.x - 10) / 93))
-                currentAnt = None
+        } 
+        else {
+          for(tunnel:List[Place] <- placesSet.tunnels){
+            for(place:Place <- tunnel){
+              
+              if (place.isInPlace(e.point)){currentAnt match {
+                case Some(a: HarvesterAnt) => {
+                  place.ant = new HarvesterAnt(place)
+                  currentAnt = None
+                }
+                case Some(a: ThrowerAnt) => {
+                  place.ant = new ThrowerAnt(place)
+                  currentAnt = None
+                }
+                case Some(a: ScubaAnt) => {
+                  place.ant = new ScubaAnt(place)
+                  currentAnt = None
+                }
+              }  
               }
-              case Some(a: ThrowerAnt) => {
-                placesSet.tunnels((p.y - 204) / 98)((p.x - 10) / 93).ant = new ThrowerAnt(placesSet.tunnels(0)((p.x - 10) / 93))
-                currentAnt = None
-              }
-              case Some(a: ScubaAnt) => {
-                placesSet.tunnels((p.y - 204) / 98)((p.x - 10) / 93).ant = new ScubaAnt(placesSet.tunnels(0)((p.x - 10) / 93))
-                currentAnt = None
-              }
-              case _ =>
             }
-            case _ =>
-          }
+          }    
+        }
+      case _ =>
+          
         }
     }
 

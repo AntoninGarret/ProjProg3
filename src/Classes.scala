@@ -55,6 +55,25 @@ class HarvesterAnt(position: Place) extends Ant {
   val blocksPath = true
 }
 
+class Leaf(startp:Place){
+   val im: Image = (new ImageIcon("img/leaf.png")).getImage()
+   var x = startp.pos.x
+   var display = true
+   var goal = startp
+   def deplace() {
+      /*if (this.x < this.goal.pos.x){
+        this.x += 2
+      }
+      else
+        this.display = false*/
+   }
+   def reset (start: Place, end:Place)={
+      this.x = start.pos.x
+      this.goal = end
+      this.display = true
+   }
+}
+
 trait ThrowerAnt extends Ant {
   var armor: Int = 1
   val cost: Int = 2
@@ -62,11 +81,13 @@ trait ThrowerAnt extends Ant {
   var strength = strength1
   val strength2 = 2 * strength1 
   val blocksPath = true
+  val ant_leaf : Leaf
 }
 
 class ShortThrowerAnt(position:Place) extends ThrowerAnt{
   val im: Image = (new ImageIcon("img/ant_shortthrower.png")).getImage()
   var pl: Place = position
+  val ant_leaf = new Leaf(this.pl)
   def move() = {
     var hit = false
     var place_checked = this.pl
@@ -81,6 +102,40 @@ class ShortThrowerAnt(position:Place) extends ThrowerAnt{
           case hd :: l => {
             hd.beattacked(strength)
             hit = true
+            this.ant_leaf.reset(this.pl,place_checked)
+          }
+        }
+        place_checked = place_checked.in
+      }
+    }
+  }
+}
+
+class LongThrowerAnt(position:Place) extends ThrowerAnt{
+  val im: Image = (new ImageIcon("img/ant_shortthrower.png")).getImage()
+  var pl: Place = position
+  val ant_leaf = new Leaf(this.pl)
+  def move() = {
+    var hit = false
+    var place_checked = this.pl
+    for(i <- 0 to 2){
+      place_checked match{
+          case p: RightPlace => hit = true
+          case _ => {}
+        }
+    }
+    while(!hit){
+      if (!hit){
+        place_checked match{
+          case p: RightPlace => hit = true
+          case _ => {}
+        }
+        place_checked.inside match {
+          case List()  => {}
+          case hd :: l => {
+            hd.beattacked(strength)
+            hit = true
+            this.ant_leaf.reset(this.pl,place_checked)
           }
         }
         place_checked = place_checked.in
@@ -184,6 +239,18 @@ class QueenAnt(position: Place) extends Ant {
     }
   }
   val blocksPath = true
+}
+
+class WallAnt(position:Place) extends Ant{
+  var pl:Place = position
+  val im: Image = (new ImageIcon("img/ant_wall.png")).getImage()
+  var armor: Int = 4
+  val cost: Int = 4
+  val strength1 = 1
+  var strength = strength1
+  val strength2 = 2 * strength1
+  val blocksPath = true
+  def move() ={}
 }
 
 class Bee(position: Place) extends Insect {

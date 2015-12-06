@@ -20,13 +20,13 @@ object Game extends SimpleSwingApplication {
   var NoQueen = true
   var currentAnt: Option[Ant] = None
 
-  val nbAnts = 6
+  val nbAnts = 8
   var market = List(new MiddlePlace(new Point(10 + nbAnts * 93, 10)))
   for (i <- 1 to nbAnts) {
     market = new MiddlePlace(new Point(10 + (nbAnts - i) * 93, 10)) :: market
   }
   val ants = List(new HarvesterAnt(market(0)), new ShortThrowerAnt(market(1)), new ScubaAnt(market(2)), new NinjaAnt(market(3)),
-    new HungryAnt(market(4)), new BodyguardAnt(market(5), new NoAnt(market(5))), new QueenAnt(market(6)))
+    new HungryAnt(market(4)), new BodyguardAnt(market(5), new NoAnt(market(5))), new QueenAnt(market(6)), new WallAnt(market(7)))
 
   var beesWin = false
 
@@ -72,7 +72,7 @@ object Game extends SimpleSwingApplication {
                     place.ant = new HarvesterAnt(place)
                     currentAnt = None
                   }
-                  case Some(a: ThrowerAnt) => {
+                  case Some(a: ShortThrowerAnt) => {
                     place.ant = new ShortThrowerAnt(place)
                     currentAnt = None
                   }
@@ -90,6 +90,10 @@ object Game extends SimpleSwingApplication {
                   }
                   case Some(a: BodyguardAnt) => {
                     place.ant = new BodyguardAnt(place, place.ant)
+                    currentAnt = None
+                  }
+                  case Some(a: WallAnt) => {
+                    place.ant = new WallAnt(place)
                     currentAnt = None
                   }
                   case Some(a: QueenAnt) => {
@@ -131,6 +135,10 @@ object Game extends SimpleSwingApplication {
           g.drawImage(pl.im, pl.pos.x, pl.pos.y, peer)
           pl.ant match {
             case a: NoAnt =>
+            case a: ThrowerAnt =>{
+                g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
+                if (a.ant_leaf.display) g.drawImage(a.ant_leaf.im, a.ant_leaf.x, pl.pos.y + 20, peer)
+              }
             case a        => g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
           }
           pl.inside match {
@@ -162,6 +170,11 @@ object Game extends SimpleSwingApplication {
       def actionPerformed(e: ActionEvent): Unit = {
         for (i <- 0 to 2) {
           for (pl <- placesSet.tunnels(i)) {
+            /*pl.ant match{
+              case a: ThrowerAnt =>{
+                a.ant_leaf.deplace()
+              }
+            }*/
             for (bee <- pl.inside) {
               bee.deplace()
             }

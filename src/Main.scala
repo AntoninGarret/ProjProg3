@@ -16,14 +16,14 @@ import scala.util.Random
 
 object Game extends SimpleSwingApplication {
 
-  var food = 10
-  var nextWave = 3
+  var food = 4
+  var nextWave = 2
   var beesPerWave = 1
 
   var NoQueen = true
   var currentAnt: Option[Ant] = None
 
-  val nbAnts = 8
+  val nbAnts = 9
   var market = List(new MiddlePlace(new Point(10, 10)))
   for (i <- 1 to 7) {
     market = new MiddlePlace(new Point(10 + i * 93, 10)) :: market
@@ -53,18 +53,7 @@ object Game extends SimpleSwingApplication {
     listenTo(mouse.clicks, mouse.moves, keys)
 
     reactions += {
-      case KeyTyped(_, 'n', _, _) => {
-        nextWave match{
-          case 0 =>{
-            for (i <-0 to (beesPerWave-1)){
-              var a = Random.nextInt(3)
-              placesSet.tunnels(a)(7).addBee(new Bee(placesSet.tunnels(a)(7)))
-            }
-            nextWave = 3
-            if (beesPerWave != 7) beesPerWave +=1
-          }
-          case _ => nextWave -=1
-        }
+      case KeyTyped(_, 'n', _, _) => if (!beesWin){
         for (i <- 0 to 2) {
           for (pl <- placesSet.tunnels(i)) {
             pl.drown()
@@ -74,8 +63,19 @@ object Game extends SimpleSwingApplication {
             }
           }
         }
+        nextWave match{
+          case 1 =>{
+            for (i <-0 to (beesPerWave-1)){
+              var a = Random.nextInt(3)
+              placesSet.tunnels(a)(7).addBee(new Bee(placesSet.tunnels(a)(7)))
+            }
+            nextWave = 3
+            if (beesPerWave != 7) beesPerWave +=1
+          }
+          case _ => nextWave -=1
+        }
       }
-      case KeyTyped(_, 'b', _, _) => placesSet.tunnels(0)(7).addBee(new Bee(placesSet.tunnels(0)(7)))
+      //case KeyTyped(_, 'b', _, _) => placesSet.tunnels(0)(7).addBee(new Bee(placesSet.tunnels(0)(7)))
       case e: MousePressed =>
         if (currentAnt == None) {
           for (pl <- market){
@@ -84,15 +84,10 @@ object Game extends SimpleSwingApplication {
                   currentAnt = Some(pl.ant)
                   food -= pl.ant.cost
                 }  
-              /*case p if (10 < p.y & p.y < 98) => {
-                if (food >= ants((p.x - 10) / 93).cost) {
-                  currentAnt = Some(ants((p.x - 10) / 93))
-                  food -= ants((p.x - 10) / 93).cost
-                }*/
               }
           }
         } 
-        else {
+        else if (!beesWin) {
           for (tunnel: List[Place] <- placesSet.tunnels) {
             for (place: Place <- tunnel) {
               if (place.isInPlace(e.point)) {
@@ -140,6 +135,10 @@ object Game extends SimpleSwingApplication {
                     }
                     currentAnt = None
                   }
+                  case Some(a: NoAnt) => {
+                    place.ant = new NoAnt(place)
+                    currentAnt = None
+                  }
                   case _ =>
                 }
               }
@@ -158,13 +157,14 @@ object Game extends SimpleSwingApplication {
       }
 
       g.drawString("Food : " + food, 10, 580)
-      g.drawString("next wave in : " + nextWave + " turns", 10, 600)
+      g.drawString("next wave in : " + nextWave + " turns", 10, 610)
       for (pl <- market) {
         g.drawImage(pl.ant.im, pl.ant.pl.pos.x, pl.ant.pl.pos.y, peer)
       }
-      if (beesWin) {
-        g.drawString("The bees win", 400, 580)
-      }
+      if (beesWin)
+        g.drawString("The bees win !", 400, 580)
+      else
+        g.drawString("Press N to end turn", 400, 580)
       for (i <- 0 to 2) {
         for (pl <- placesSet.tunnels(i)) {
           /* g.setColor(Color.black)
@@ -177,9 +177,16 @@ object Game extends SimpleSwingApplication {
                 if (a.ant_leaf.display) g.drawImage(a.ant_leaf.im, a.ant_leaf.x, pl.pos.y + 30, peer)
               }
             case a: BodyguardAnt => a.protectedAnt match {
-              case p: NoAnt => g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
-              case p =>  g.drawImage(p.im, pl.pos.x, pl.pos.y + 20, peer)
-                          g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
+              case p: NoAnt => {}
+              case p: ThrowerAnt =>{
+                g.drawImage(p.im, pl.pos.x, pl.pos.y + 20, peer)
+                g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
+                if (p.ant_leaf.display) g.drawImage(p.ant_leaf.im, p.ant_leaf.x, pl.pos.y + 30, peer)
+              }
+              case p =>{
+                g.drawImage(p.im, pl.pos.x, pl.pos.y + 20, peer)
+                g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
+              }
             }
             case a => g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
           }
@@ -212,6 +219,12 @@ object Game extends SimpleSwingApplication {
             pl.ant match{
               case a: ThrowerAnt =>{
                 a.ant_leaf.deplace()
+              }
+              case a: BodyguardAnt =>{
+                a.protectedAnt match{
+                  case p: ThrowerAnt => p.ant_leaf.deplace()
+                  case _ => {}
+                }
               }
               case _ =>{}
             }

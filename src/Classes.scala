@@ -41,7 +41,7 @@ class NoAnt(position: Place) extends Ant {
   val cost = 0
   def move() = {}
   val blocksPath = false
-  val im: Image = (new ImageIcon("img/ant_freeze.png")).getImage()
+  val im: Image = (new ImageIcon("img/remover.png")).getImage()
   val strength1 = 0
   var strength = strength1
   val strength2 = 2 * strength1 

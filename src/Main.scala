@@ -12,10 +12,13 @@ import scala.swing.event.MousePressed
 import javax.swing.ImageIcon
 import javax.swing.Timer
 import java.awt.Point
+import scala.util.Random
 
 object Game extends SimpleSwingApplication {
 
   var food = 10
+  var nextWave = 3
+  var beesPerWave = 1
 
   var NoQueen = true
   var currentAnt: Option[Ant] = None
@@ -51,6 +54,17 @@ object Game extends SimpleSwingApplication {
 
     reactions += {
       case KeyTyped(_, 'n', _, _) => {
+        nextWave match{
+          case 0 =>{
+            for (i <-0 to (beesPerWave-1)){
+              var a = Random.nextInt(3)
+              placesSet.tunnels(a)(7).addBee(new Bee(placesSet.tunnels(a)(7)))
+            }
+            nextWave = 3
+            if (beesPerWave != 7) beesPerWave +=1
+          }
+          case _ => nextWave -=1
+        }
         for (i <- 0 to 2) {
           for (pl <- placesSet.tunnels(i)) {
             pl.drown()
@@ -144,6 +158,7 @@ object Game extends SimpleSwingApplication {
       }
 
       g.drawString("Food : " + food, 10, 580)
+      g.drawString("next wave in : " + nextWave + "turns", 10, 600)
       for (pl <- market) {
         g.drawImage(pl.ant.im, pl.ant.pl.pos.x, pl.ant.pl.pos.y, peer)
       }

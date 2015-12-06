@@ -300,7 +300,11 @@ object placesSet {
   for (tun <- 0 to 2) {
     var places: List[Place] = List(new RightPlace(new Point(40 + 7 * 93, 400 - (tun * 98))))
     for (i <- 1 to 6) {
-      places = (new MiddlePlace(new Point(40 + (7 - i) * 93, 400 - (tun * 98)))) :: places
+      if (i==5) {
+        places = (new MiddleWaterPlace(new Point(40 + (7 - i) * 93, 400 - (tun * 98)))) :: places
+      } else {
+        places = (new MiddlePlace(new Point(40 + (7 - i) * 93, 400 - (tun * 98)))) :: places
+      }
     }
     places = (new LeftPlace(new Point(40, 400 - (tun * 98)))) :: places
     places(0).in = places(1)
@@ -309,7 +313,6 @@ object placesSet {
       places(i).out = places(i - 1)
     }
     places(7).out = places(6)
-    places(2).isWater = true
     tunnels = places :: tunnels
   }
 }

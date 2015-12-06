@@ -65,7 +65,6 @@ object Game extends SimpleSwingApplication {
         } else {
           for (tunnel: List[Place] <- placesSet.tunnels) {
             for (place: Place <- tunnel) {
-
               if (place.isInPlace(e.point)) {
                 currentAnt match {
                   case Some(a: HarvesterAnt) => {
@@ -120,18 +119,22 @@ object Game extends SimpleSwingApplication {
       for (ant <- ants) {
         g.drawImage(ant.im, ant.pl.pos.x, ant.pl.pos.y, peer)
       }
+      if (beesWin) {
+        g.drawString("The bees win", 400, 580)
+      }
       for (i <- 0 to 2) {
         for (pl <- placesSet.tunnels(i)) {
           /* g.setColor(Color.black)
     	    g.draw(pl.boite)*/
-          if (pl.isWater) {
-            g.setColor(Color.blue)
-            g.fillRect(pl.pos.x, pl.pos.y, 93, 98)
-          }
           g.drawImage(pl.im, pl.pos.x, pl.pos.y, peer)
           pl.ant match {
             case a: NoAnt =>
-            case a        => g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
+            case a: BodyguardAnt => a.protectedAnt match {
+              case p: NoAnt => g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
+              case p =>  g.drawImage(p.im, pl.pos.x, pl.pos.y + 20, peer)
+                          g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
+            }
+            case a => g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
           }
           pl.inside match {
             case Nil => {}
@@ -142,9 +145,6 @@ object Game extends SimpleSwingApplication {
             }
           }
         }
-      }
-      if (beesWin) {
-        g.drawString("The bees win", 400, 580)
       }
     }
   }

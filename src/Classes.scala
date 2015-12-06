@@ -10,10 +10,14 @@ trait Insect {
   var pl: Place
   var armor: Int
   def move()
-  def beattacked(strength: Int) = {
+  def beattacked(strength: Int):Unit = {
     this.armor -= strength
     if (this.armor <= 0) {
       this match {
+        case a: FireAnt =>{
+          a.reduce_armor()
+          a.pl.ant = new NoAnt(a.pl)
+        }
         case a: Ant => a.pl.ant = new NoAnt(a.pl)
         case a: Bee => a.pl.removeBee(a)
       }
@@ -60,7 +64,7 @@ class Leaf(startp:Place){
    var x = startp.pos.x
    var display = true
    var goal = startp
-   def deplace() {
+   def deplace():Unit ={
       /*if (this.x < this.goal.pos.x){
         this.x += 2
       }
@@ -112,7 +116,7 @@ class ShortThrowerAnt(position:Place) extends ThrowerAnt{
 }
 
 class LongThrowerAnt(position:Place) extends ThrowerAnt{
-  val im: Image = (new ImageIcon("img/ant_shortthrower.png")).getImage()
+  val im: Image = (new ImageIcon("img/ant_longthrower.png")).getImage()
   var pl: Place = position
   val ant_leaf = new Leaf(this.pl)
   def move() = {
@@ -253,6 +257,23 @@ class WallAnt(position:Place) extends Ant{
   def move() ={}
 }
 
+class FireAnt(position:Place) extends Ant{
+  var pl:Place = position
+  val im: Image = (new ImageIcon("img/ant_fire.png")).getImage()
+  var armor: Int = 1
+  val cost: Int = 5
+  val strength1 = 3
+  var strength = strength1
+  val strength2 = 2 * strength1
+  val blocksPath = true
+  def move() ={}
+  def reduce_armor() = {
+    for (b:Bee <- this.pl.inside){
+      b.beattacked(this.strength)
+    }
+  }
+}
+
 class Bee(position: Place) extends Insect {
   val im: Image = (new ImageIcon("img/bee.png")).getImage()
   var pl: Place = position
@@ -367,7 +388,11 @@ object placesSet {
   for (tun <- 0 to 2) {
     var places: List[Place] = List(new RightPlace(new Point(40 + 7 * 93, 400 - (tun * 98))))
     for (i <- 1 to 6) {
-      places = (new MiddlePlace(new Point(40 + (7 - i) * 93, 400 - (tun * 98)))) :: places
+      if (i==5) {
+        places = (new MiddleWaterPlace(new Point(40 + (7 - i) * 93, 400 - (tun * 98)))) :: places
+      } else {
+        places = (new MiddlePlace(new Point(40 + (7 - i) * 93, 400 - (tun * 98)))) :: places
+      }
     }
     places = (new LeftPlace(new Point(40, 400 - (tun * 98)))) :: places
     places(0).in = places(1)
@@ -376,9 +401,9 @@ object placesSet {
       places(i).out = places(i - 1)
     }
     places(7).out = places(6)
-    places(2).isWater = true
     tunnels = places :: tunnels
   }
 }
+
 
 

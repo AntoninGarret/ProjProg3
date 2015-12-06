@@ -158,7 +158,7 @@ object Game extends SimpleSwingApplication {
       }
 
       g.drawString("Food : " + food, 10, 580)
-      g.drawString("next wave in : " + nextWave + "turns", 10, 600)
+      g.drawString("next wave in : " + nextWave + " turns", 10, 600)
       for (pl <- market) {
         g.drawImage(pl.ant.im, pl.ant.pl.pos.x, pl.ant.pl.pos.y, peer)
       }

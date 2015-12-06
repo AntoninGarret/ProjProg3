@@ -174,7 +174,7 @@ object Game extends SimpleSwingApplication {
             case a: NoAnt =>
             case a: ThrowerAnt =>{
                 g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
-                if (a.ant_leaf.display) g.drawImage(a.ant_leaf.im, a.ant_leaf.x, pl.pos.y + 20, peer)
+                if (a.ant_leaf.display) g.drawImage(a.ant_leaf.im, a.ant_leaf.x, pl.pos.y + 30, peer)
               }
             case a: BodyguardAnt => a.protectedAnt match {
               case p: NoAnt => g.drawImage(a.im, pl.pos.x, pl.pos.y + 20, peer)
@@ -209,11 +209,12 @@ object Game extends SimpleSwingApplication {
       def actionPerformed(e: ActionEvent): Unit = {
         for (i <- 0 to 2) {
           for (pl <- placesSet.tunnels(i)) {
-            /*pl.ant match{
+            pl.ant match{
               case a: ThrowerAnt =>{
                 a.ant_leaf.deplace()
               }
-            }*/
+              case _ =>{}
+            }
             for (bee <- pl.inside) {
               bee.deplace()
             }

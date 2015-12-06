@@ -62,17 +62,17 @@ class HarvesterAnt(position: Place) extends Ant {
 class Leaf(startp:Place){
    val im: Image = (new ImageIcon("img/leaf.png")).getImage()
    var x = startp.pos.x
-   var display = true
+   var display = false
    var goal = startp
    def deplace():Unit ={
-      /*if (this.x < this.goal.pos.x){
+      if (this.x < this.goal.pos.x - 30){
         this.x += 2
       }
       else
-        this.display = false*/
+        this.display = false
    }
    def reset (start: Place, end:Place)={
-      this.x = start.pos.x
+      this.x = start.pos.x + 40
       this.goal = end
       this.display = true
    }
